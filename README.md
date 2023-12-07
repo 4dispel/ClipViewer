@@ -13,20 +13,29 @@ to use in obs add a window capture that only allows exactly the same name as the
 commands:
 
 everyone:
+
 !cq <link> -> queue clip (queue up to 10 clips after current)
+
 !cs -> show queue
 
 
 Mods only:
+
 !cr <number> -> go forward <number> clips and remove then go back to current
+
 !cc -> clear queue
 
 
 Broadcaster only:
+
 !cp -> play current clip in queue
 
+
 !cn -> go to next clip and play it
+
 !cn <number> -> go <number> clips forward and play (max 15)
 
+
 !cb -> got to last clip and play it
+
 !cb <number> -> go back <number> clips and play (max 5)
