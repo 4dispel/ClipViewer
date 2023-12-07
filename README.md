@@ -1,9 +1,13 @@
 this is a twitch bot that connects to a chat and then provides commands to manage a queue for twitch clips
 
 provide your own login_name, user access token with the scopes below, as well as stream to connect too and client id in the creds.rs file
+
 chat:edit
+
 user:read:chat
+
 user:bot
+
 chat:read
 
 you also need chromedriver running on port 9515 for the clips to be played
