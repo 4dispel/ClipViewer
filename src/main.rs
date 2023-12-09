@@ -59,7 +59,7 @@ async fn main() -> WebDriverResult<()> {
                             //         thread::sleep(slowmodetime)
                             //     }
                             // }
-                            command if command.starts_with("cq") => {
+                            command if command.to_lowercase().starts_with("cq") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -81,7 +81,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cp") => {
+                            command if command.to_lowercase().starts_with("cp") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -101,7 +101,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cn ") => {
+                            command if command.to_lowercase().starts_with("cn ") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -122,7 +122,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cn") => {
+                            command if command.to_lowercase().starts_with("cn") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -142,7 +142,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cb ") => {
+                            command if command.to_lowercase().starts_with("cb ") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -163,7 +163,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cb") => {
+                            command if command.to_lowercase().starts_with("cb") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -183,7 +183,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cc") => {
+                            command if command.to_lowercase().starts_with("cc") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -197,7 +197,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cs") => {
+                            command if command.to_lowercase().starts_with("cs") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
@@ -211,7 +211,7 @@ async fn main() -> WebDriverResult<()> {
                                     thread::sleep(slowmodetime)
                                 }
                             }
-                            command if command.starts_with("cr ") => {
+                            command if command.to_lowercase().starts_with("cr ") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
                                     && !moderator
