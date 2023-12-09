@@ -6,7 +6,7 @@ the bot uses twitch-irc to connect to a twitch chat and uses thirtyfour to conne
 
 
 ## setup
-provide your own login_name, user access token with the scopes below, as well as stream to connect to, and client id in the creds.rs file
+provide your own login_name, user access token with the scopes below, as well as stream to connect to, and client id in the /src/creds.rs file
 ```
 chat:edit
 user:read:chat
