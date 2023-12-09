@@ -1,6 +1,12 @@
+# ClipViewer
 this is a twitch bot that connects to a chat and then provides commands to manage a queue for twitch clips
 
-provide your own login_name, user access token with the scopes below, as well as stream to connect too and client id in the creds.rs file
+## about
+the bot uses twitch-irc to connect to a twitch chat and uses thirtyfour to connect to a chromedriver and display twitch clips embeds
+
+
+## setup
+provide your own login_name, user access token with the scopes below, as well as stream to connect to, and client id in the creds.rs file
 ```
 chat:edit
 user:read:chat
@@ -11,6 +17,17 @@ you also need chromedriver running on port 9515 for the clips to be played
 
 to use in obs add a window capture that only allows exactly the same name as the window
 
+### run bot
+```
+cargo run
+```
+### compile bot without running
+```
+cargo build
+```
+you can then find the bot at /target/debug/clip_viewer.exe
+name might be different if not on Windows
+this is a debug mode build, to compile release mode add --release flag
 ## commands
 
 ```
