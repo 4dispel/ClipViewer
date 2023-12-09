@@ -469,6 +469,7 @@ async fn _run_current(
                 println!("clip finished playing");
             }
             Err(_) => {
+                println!("check if chromedriver is running");
                 _send_msg(
                     "something went wrong playing the clip".to_owned(),
                     client,
@@ -487,7 +488,13 @@ async fn _reply_msg(
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
     orginal_message: &PrivmsgMessage,
 ) {
-    client.say_in_reply_to(orginal_message, msg).await.unwrap();
+    if client
+        .say_in_reply_to(orginal_message, msg.clone())
+        .await
+        .is_err()
+    {
+        println!("coudn't send reply \"{}\"", msg)
+    }
 }
 
 async fn _send_msg(
@@ -495,7 +502,9 @@ async fn _send_msg(
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
     channel: &String,
 ) {
-    client.say(channel.to_string(), msg).await.unwrap();
+    if client.say(channel.to_string(), msg.clone()).await.is_err() {
+        println!("coudn't send reply \"{}\"", msg)
+    }
 }
 
 async fn _show_queue(
@@ -507,7 +516,13 @@ async fn _show_queue(
     let endindex = 4 + queue.remaining_clips;
     let mut sum_text = "".to_string();
     for i in startindex..=endindex {
-        let clip = queue.queue[i].clone().unwrap();
+        let clip = match queue.queue[i].clone() {
+            Some(c) => c,
+            None => {
+                println!("attempt to access queue failed");
+                return;
+            }
+        };
         // let j: i32 = i - 5;
         sum_text += format!("clip {}: {}  | ", i as i32 - 5, clip.title).as_str();
     }
@@ -579,16 +594,14 @@ async fn _enqueue_clip(
             };
             match queue.enqueue(clip) {
                 Ok(a) => {
-                    _reply_msg(
-                        format!(
-                            "clip: \"{}\" queued at position: {}",
-                            queue.queue[a].clone().unwrap().title,
+                    let reply = match queue.queue[a].clone() {
+                        Some(c) => format!("clip: \"{}\" queued at position: {}", c.title, a - 5),
+                        None => format!(
+                            "clip: queued at position: {}, but couldn't find title",
                             a - 5
                         ),
-                        client,
-                        orginal_message,
-                    )
-                    .await
+                    };
+                    _reply_msg(reply, client, orginal_message).await
                 }
                 Err(a) => {
                     _reply_msg(
@@ -853,15 +866,29 @@ async fn check_for_clip(
     };
     println!("{}", clip_id);
     let client = reqwest::Client::new();
-    let res = client
+    let res = match client
         .get(format!("https://api.twitch.tv/helix/clips?id={}", clip_id))
         .header("Authorization".to_owned(), format!("Bearer {}", auth))
         .header("Client-Id".to_owned(), client_id)
         .send()
         .await
-        .unwrap()
-        .json::<CheckClipRequest>()
-        .await;
+    {
+        Ok(r) => r.json::<CheckClipRequest>().await,
+        Err(_) => {
+            println!("twitch api didn't respond");
+            return None;
+        }
+    };
+
+    // let res = client
+    //     .get(format!("https://api.twitch.tv/helix/clips?id={}", clip_id))
+    //     .header("Authorization".to_owned(), format!("Bearer {}", auth))
+    //     .header("Client-Id".to_owned(), client_id)
+    //     .send()
+    //     .await
+    //     .unwrap()
+    //     .json::<CheckClipRequest>()
+    //     .await;
     // if res.is_ok() {
     //     match res.unwrap().data.get(0) {
     //         Some(clip) => Some((clip.duration, clip_id, clip.title.clone())),
