@@ -148,6 +148,7 @@ dependencies = [
  "thirtyfour",
  "tokio",
  "twitch-irc",
+ "url",
 ]
 
 [[package]]

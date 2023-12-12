@@ -8,6 +8,7 @@ use twitch_irc::transport::tcp::TCPTransport;
 use twitch_irc::ClientConfig;
 use twitch_irc::SecureTCPTransport;
 use twitch_irc::TwitchIRCClient;
+use url::Url;
 mod creds;
 #[tokio::main]
 async fn main() -> WebDriverResult<()> {
@@ -847,16 +848,16 @@ async fn check_for_clip(
     auth: &String,
     client_id: &String,
 ) -> Option<(f32, String, String)> {
-    let url = url.to_string();
+    //parse url to remove query parameters
+    let url = match Url::parse(url) {
+        Ok(a) => a.path().to_owned(),
+        Err(_) => {
+            println!("no resolvable url");
+            return None;
+        }
+    };
     let clip_id_t: Vec<&str> = url.trim().rsplit_terminator('/').collect();
     let clip_id_t = clip_id_t.first();
-    // let clip_id: String;
-    // if clip_id_t.is_some() {
-    //     clip_id = clip_id_t.unwrap().to_owned().to_owned();
-    // } else {
-    //     println!("couldn't get clip id");
-    //     return None;
-    // }
     let clip_id = match clip_id_t {
         Some(id) => id.to_owned().to_owned(),
         None => {
