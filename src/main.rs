@@ -880,28 +880,6 @@ async fn check_for_clip(
             return None;
         }
     };
-
-    // let res = client
-    //     .get(format!("https://api.twitch.tv/helix/clips?id={}", clip_id))
-    //     .header("Authorization".to_owned(), format!("Bearer {}", auth))
-    //     .header("Client-Id".to_owned(), client_id)
-    //     .send()
-    //     .await
-    //     .unwrap()
-    //     .json::<CheckClipRequest>()
-    //     .await;
-    // if res.is_ok() {
-    //     match res.unwrap().data.get(0) {
-    //         Some(clip) => Some((clip.duration, clip_id, clip.title.clone())),
-    //         None => {
-    //             println!("no clip returned by twitch");
-    //             None
-    //         }
-    //     }
-    // } else {
-    //     println!("couldn't find clip");
-    //     None
-    // }
     match res {
         Ok(r) => match r.data.get(0) {
             Some(clip) => Some((clip.duration, clip_id, clip.title.clone())),
