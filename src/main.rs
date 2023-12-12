@@ -2,6 +2,7 @@ use ::twitch_irc::message::ServerMessage;
 use serde::Deserialize;
 use std::{thread, time::Duration};
 use thirtyfour::prelude::*;
+use tokio::sync::mpsc::UnboundedSender;
 use twitch_irc::login::StaticLoginCredentials;
 use twitch_irc::message::PrivmsgMessage;
 use twitch_irc::transport::tcp::TCPTransport;
@@ -20,6 +21,7 @@ async fn main() -> WebDriverResult<()> {
         TwitchIRCClient::<SecureTCPTransport, StaticLoginCredentials>::new(config);
     let mut slowmodetime: Duration = Duration::from_secs(1);
     let client2 = client.clone();
+    let (clip_sender, mut clip_receiver) = tokio::sync::mpsc::unbounded_channel();
     let join_handle = tokio::spawn(async move {
         let mut moderator = creds::LOGIN_NAME == creds::STREAM_NAME;
         let mut queue = ClipQueue::new();
@@ -90,13 +92,7 @@ async fn main() -> WebDriverResult<()> {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
                                 }
-                                _run_current(
-                                    &mut queue,
-                                    &msg,
-                                    &client2,
-                                    &creds::STREAM_NAME.to_string(),
-                                )
-                                .await;
+                                _run_current(&mut queue, &msg, &client2, &clip_sender).await;
                                 if creds::LOGIN_NAME != creds::STREAM_NAME && !moderator {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
@@ -110,14 +106,8 @@ async fn main() -> WebDriverResult<()> {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
                                 }
-                                _run_next_n(
-                                    &mut queue,
-                                    &msg,
-                                    &client2,
-                                    &creds::STREAM_NAME.to_string(),
-                                    command,
-                                )
-                                .await;
+                                _run_next_n(&mut queue, &msg, &client2, command, &clip_sender)
+                                    .await;
                                 if creds::LOGIN_NAME != creds::STREAM_NAME && !moderator {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
@@ -131,13 +121,7 @@ async fn main() -> WebDriverResult<()> {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
                                 }
-                                _run_next(
-                                    &mut queue,
-                                    &msg,
-                                    &client2,
-                                    &creds::STREAM_NAME.to_string(),
-                                )
-                                .await;
+                                _run_next(&mut queue, &msg, &client2, &clip_sender).await;
                                 if creds::LOGIN_NAME != creds::STREAM_NAME && !moderator {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
@@ -151,14 +135,8 @@ async fn main() -> WebDriverResult<()> {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
                                 }
-                                _run_previous_n(
-                                    &mut queue,
-                                    &msg,
-                                    &client2,
-                                    &creds::STREAM_NAME.to_string(),
-                                    command,
-                                )
-                                .await;
+                                _run_previous_n(&mut queue, &msg, &client2, command, &clip_sender)
+                                    .await;
                                 if creds::LOGIN_NAME != creds::STREAM_NAME && !moderator {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
@@ -172,13 +150,7 @@ async fn main() -> WebDriverResult<()> {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
                                 }
-                                _run_previous(
-                                    &mut queue,
-                                    &msg,
-                                    &client2,
-                                    &creds::STREAM_NAME.to_string(),
-                                )
-                                .await;
+                                _run_previous(&mut queue, &msg, &client2, &clip_sender).await;
                                 if creds::LOGIN_NAME != creds::STREAM_NAME && !moderator {
                                     println!("sleeping");
                                     thread::sleep(slowmodetime)
@@ -257,6 +229,28 @@ async fn main() -> WebDriverResult<()> {
             }
         }
     });
+    let client3 = client.clone();
+    tokio::spawn(async move {
+        loop {
+            thread::sleep(Duration::from_secs(3));
+            if let Some(clip) = clip_receiver.recv().await {
+                match clip.run().await {
+                    Ok(_) => {
+                        println!("clip finished playing");
+                    }
+                    Err(_) => {
+                        println!("check if chromedriver is running");
+                        _send_msg(
+                            "something went wrong playing the clip".to_owned(),
+                            &client3,
+                            &creds::STREAM_NAME.to_owned(),
+                        )
+                        .await
+                    }
+                }
+            }
+        }
+    });
     client.join(creds::STREAM_NAME.to_owned()).unwrap();
     join_handle.await.unwrap();
     Ok(())
@@ -280,7 +274,7 @@ async fn _run_next(
     queue: &mut ClipQueue,
     orginal_message: &PrivmsgMessage,
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    channel: &String,
+    clip_sender: &UnboundedSender<ReceivedClipRequest>,
 ) {
     if !_msg_is_bc(orginal_message).await {
         _reply_msg(
@@ -293,7 +287,7 @@ async fn _run_next(
     }
     match queue.advance(1) {
         Err(_) => _reply_msg("no clip next in queue".to_owned(), client, orginal_message).await,
-        Ok(_) => _run_current(queue, orginal_message, client, channel).await,
+        Ok(_) => _run_current(queue, orginal_message, client, clip_sender).await,
     }
 }
 
@@ -301,8 +295,8 @@ async fn _run_next_n(
     queue: &mut ClipQueue,
     orginal_message: &PrivmsgMessage,
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    channel: &String,
     text: String,
+    clip_sender: &UnboundedSender<ReceivedClipRequest>,
 ) {
     if !_msg_is_bc(orginal_message).await {
         _reply_msg(
@@ -330,14 +324,14 @@ async fn _run_next_n(
             )
             .await
         }
-        Ok(_) => _run_current(queue, orginal_message, client, channel).await,
+        Ok(_) => _run_current(queue, orginal_message, client, clip_sender).await,
     }
 }
 async fn _run_previous(
     queue: &mut ClipQueue,
     orginal_message: &PrivmsgMessage,
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    channel: &String,
+    clip_sender: &UnboundedSender<ReceivedClipRequest>,
 ) {
     if !_msg_is_bc(orginal_message).await {
         _reply_msg(
@@ -357,7 +351,7 @@ async fn _run_previous(
             )
             .await
         }
-        Ok(_) => _run_current(queue, orginal_message, client, channel).await,
+        Ok(_) => _run_current(queue, orginal_message, client, clip_sender).await,
     }
 }
 
@@ -365,8 +359,8 @@ async fn _run_previous_n(
     queue: &mut ClipQueue,
     orginal_message: &PrivmsgMessage,
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    channel: &String,
     text: String,
+    clip_sender: &UnboundedSender<ReceivedClipRequest>,
 ) {
     if !_msg_is_bc(orginal_message).await {
         _reply_msg(
@@ -394,7 +388,7 @@ async fn _run_previous_n(
             )
             .await
         }
-        Ok(_) => _run_current(queue, orginal_message, client, channel).await,
+        Ok(_) => _run_current(queue, orginal_message, client, clip_sender).await,
     }
 }
 
@@ -446,7 +440,7 @@ async fn _run_current(
     queue: &mut ClipQueue,
     orginal_message: &PrivmsgMessage,
     client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    channel: &String,
+    clip_sender: &UnboundedSender<ReceivedClipRequest>,
 ) {
     if !_msg_is_bc(orginal_message).await {
         _reply_msg(
@@ -459,26 +453,20 @@ async fn _run_current(
     }
     if queue.remaining_clips > 0 {
         let clip = queue.current().unwrap();
+        if clip_sender.send(clip.clone()).is_err() {
+            _reply_msg(
+                "internal error starting clip".to_owned(),
+                client,
+                orginal_message,
+            )
+            .await;
+        };
         _reply_msg(
-            format!("playing clip: {}", clip.title),
+            format!("waiting to start clip: {}", clip.title),
             client,
             orginal_message,
         )
         .await;
-        match clip.run().await {
-            Ok(_) => {
-                println!("clip finished playing");
-            }
-            Err(_) => {
-                println!("check if chromedriver is running");
-                _send_msg(
-                    "something went wrong playing the clip".to_owned(),
-                    client,
-                    channel,
-                )
-                .await
-            }
-        }
     } else {
         _reply_msg("no clip queued".to_owned(), client, orginal_message).await;
     }
