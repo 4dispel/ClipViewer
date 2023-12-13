@@ -774,7 +774,7 @@ impl ClipQueue {
         }
     }
     fn advance(&mut self, n: usize) -> Result<(), ()> {
-        if n > self.remaining_clips {
+        if n >= self.remaining_clips {
             return Err(());
         }
         for i in 0..=20 - n {
