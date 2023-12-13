@@ -37,7 +37,7 @@ async fn main() -> WebDriverResult<()> {
                         if &msg.message_text[msg.message_text.len() - 5..]
                             == std::str::from_utf8(&[0x20, 0xF3, 0xA0, 0x80, 0x80]).unwrap()
                         {
-                            msg.message_text[..msg.message_text.len() - 4].to_owned()
+                            msg.message_text[..msg.message_text.len() - 5].to_owned()
                         } else {
                             msg.message_text.clone()
                         }
