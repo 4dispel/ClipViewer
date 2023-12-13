@@ -245,7 +245,7 @@ async fn main() -> WebDriverResult<()> {
                             &client3,
                             &creds::STREAM_NAME.to_owned(),
                         )
-                        .await
+                        .await;
                     }
                 }
             }
