@@ -574,7 +574,7 @@ async fn _enqueue_clip(
     auth: &String,
     client_id: &String,
 ) {
-    match check_for_clip(&text[3..], auth, client_id).await {
+    match check_for_clip(&text[2..], auth, client_id).await {
         Some(res) => {
             let clip = ReceivedClipRequest {
                 duration: res.0,
