@@ -46,22 +46,6 @@ async fn main() -> WebDriverResult<()> {
                     };
                     match unmangled_text {
                         text if text.starts_with('!') => match text[1..].to_string() {
-                            // clip request for deprecated autoplay version
-                            // command if command.starts_with("cq") => {
-                            //     if msg.sender.name == login_name2
-                            //         && login_name2 != stream2
-                            //         && !moderator
-                            //     {
-                            //         println!("sleeping");
-                            //         thread::sleep(slowmodetime)
-                            //     }
-                            //     _clip_request(command, &client2, &oauth_token2, &client_id2, &msg)
-                            //         .await;
-                            //     if login_name2 != stream2 && !moderator {
-                            //         println!("sleeping");
-                            //         thread::sleep(slowmodetime)
-                            //     }
-                            // }
                             command if command.to_lowercase().starts_with("cq") => {
                                 if msg.sender.name == creds::LOGIN_NAME
                                     && creds::LOGIN_NAME != creds::STREAM_NAME
@@ -254,20 +238,6 @@ async fn main() -> WebDriverResult<()> {
     client.join(creds::STREAM_NAME.to_owned()).unwrap();
     join_handle.await.unwrap();
     Ok(())
-}
-
-//deprecated autoplay clip
-async fn _clip_request(
-    msg: String,
-    client: &TwitchIRCClient<TCPTransport<twitch_irc::transport::tcp::TLS>, StaticLoginCredentials>,
-    auth: &String,
-    client_id: &String,
-    orginal_message: &PrivmsgMessage,
-) {
-    match _run_clip(msg[3..].to_string(), auth, client_id).await {
-        Ok(_) => _reply_msg("clip finished playing".to_owned(), client, orginal_message).await,
-        Err(_) => _reply_msg("couldn't queue clip".to_owned(), client, orginal_message).await,
-    }
 }
 
 async fn _run_next(
